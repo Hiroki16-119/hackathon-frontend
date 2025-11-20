@@ -3,47 +3,36 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Sell from "./pages/Sell";
 import LoginForm from "./components/LoginForm";
-import ProductDetail from "./pages/ProductDetail"; // ✅ 商品詳細ページ
+import ProductDetail from "./pages/ProductDetail";
 import useAuth from "./hooks/useAuth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+  // ✅ 環境変数からAPIのベースURLを取得
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 
 export default function App() {
   const { user, login, logout } = useAuth();
+  const [products, setProducts] = useState([]);
 
-  // 商品データ（説明を追加）
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "古着ジャケット",
-      price: 2500,
-      imageUrl: "https://placehold.co/300x200",
-      description: "ヴィンテージ感のあるデニムジャケットです。サイズはL。",
-    },
-    {
-      id: 2,
-      name: "レトロカメラ",
-      price: 5500,
-      imageUrl: "https://placehold.co/300x200",
-      description: "昔懐かしいフィルムカメラ。インテリアにもおすすめ。",
-    },
-    {
-      id: 3,
-      name: "スマホケース",
-      price: 800,
-      imageUrl: "https://placehold.co/300x200",
-      description: "透明タイプでシンプルなデザイン。iPhone対応。",
-    },
-  ]);
-
-  // 新しい商品を追加
-  const addProduct = (newProduct) => {
-    setProducts((prev) => [
-      ...prev,
-      { id: prev.length + 1, ...newProduct },
-    ]);
+  // ✅ 商品一覧を取得する関数
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/products`);
+      if (!res.ok) throw new Error("商品一覧の取得に失敗しました");
+      const data = await res.json();
+      setProducts(data);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  // ログインしてない場合はログインフォームを表示
+  // ✅ 初回レンダリング時に商品一覧を取得
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  // ✅ ログインしてない場合はログインフォームを表示
   if (!user) return <LoginForm onLogin={login} />;
 
   return (
@@ -53,10 +42,10 @@ export default function App() {
         {/* 商品一覧ページ */}
         <Route path="/" element={<Home products={products} />} />
 
-        {/* 出品ページ */}
-        <Route path="/sell" element={<Sell addProduct={addProduct} />} />
+        {/* 出品ページ（出品成功後に一覧を再取得） */}
+        <Route path="/sell" element={<Sell onProductAdded={fetchProducts} />} />
 
-        {/* ✅ 商品詳細ページ */}
+        {/* 商品詳細ページ */}
         <Route
           path="/product/:id"
           element={<ProductDetail products={products} />}
