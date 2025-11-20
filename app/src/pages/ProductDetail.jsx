@@ -1,9 +1,27 @@
 import { useParams, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 export default function ProductDetail({ products }) {
   const { id } = useParams();
-  const product = products.find((p) => p.id === Number(id));
+  const [product, setProduct] = useState(null);
 
+  useEffect(() => {
+    if (products.length > 0) {
+      const found = products.find((p) => p.id === id);
+      setProduct(found || null);
+    }
+  }, [id, products]);
+
+  // ✅ productsがまだ読み込まれていない場合
+  if (products.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-10 text-center">
+        <p className="text-gray-500 text-lg">読み込み中です...</p>
+      </div>
+    );
+  }
+
+  // ✅ 商品が存在しない場合
   if (!product) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-10 text-center">
@@ -15,6 +33,7 @@ export default function ProductDetail({ products }) {
     );
   }
 
+  // ✅ 商品が見つかった場合
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <img
