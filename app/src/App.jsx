@@ -8,8 +8,7 @@ import useAuth from "./hooks/useAuth";
 import { useState, useEffect } from "react";
 
   // ✅ 環境変数からAPIのベースURLを取得
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function App() {
   const { user, login, logout } = useAuth();
