@@ -12,7 +12,7 @@ export default function Sell({ onProductAdded }) {
   const navigate = useNavigate();
 
     // ✅ 環境変数からAPIのベースURLを取得
-  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
   // ✅ ChatGPT APIで説明を生成
@@ -59,9 +59,13 @@ export default function Sell({ onProductAdded }) {
         body: JSON.stringify(newProduct),
       });
 
-      if (!res.ok) throw new Error("出品に失敗しました");
+      const data = await res.json();
+      if (!res.ok) {
+        console.error("Backend error:", data);
+        alert("出品に失敗しました");
+        return;
+      }
 
-      await res.json();
       alert("✅ 商品を出品しました！");
 
       onProductAdded();
