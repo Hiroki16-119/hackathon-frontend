@@ -1,11 +1,13 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Sell from "./pages/Sell";
 import LoginForm from "./components/LoginForm";
+import MyPage from "./pages/MyPage";
 import ProductDetail from "./pages/ProductDetail";
 import useAuth from "./hooks/useAuth";
 import { useState, useEffect } from "react";
+import ProductEdit from "./pages/ProductEdit";
 
   // ✅ 環境変数からAPIのベースURLを取得
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -34,22 +36,37 @@ export default function App() {
   // ✅ ログインしてない場合はログインフォームを表示
   if (!user) return <LoginForm onLogin={login} />;
 
+
   return (
     <BrowserRouter>
-      <Navbar user={user} onLogout={logout} />
-      <Routes>
-        {/* 商品一覧ページ */}
-        <Route path="/" element={<Home products={products} />} />
+      {/* アプリ全体を中央寄せコンテナで包む */}
+      <div className="max-w-7xl mx-auto px-4">
+      {/* Navbar とページ本体を同じ中央コンテナ内に収める */}
+        <Navbar user={user} onLogout={logout} />
 
-        {/* 出品ページ（出品成功後に一覧を再取得） */}
-        <Route path="/sell" element={<Sell onProductAdded={fetchProducts} />} />
-
-        {/* 商品詳細ページ */}
-        <Route
-          path="/product/:id"
-          element={<ProductDetail products={products} />}
-        />
-      </Routes>
+      {/* main を分けて余白やレイアウトを付与 */}
+        <main className="w-full py-10">
+          <Routes>
+            <Route path="/" element={<Home products={products} user={user} fetchProducts={fetchProducts} />} />
+            <Route
+              path="/sell"
+              element={<Sell onProductAdded={fetchProducts} user={user} />}
+            />
+            <Route
+              path="/mypage"
+              element={<Navigate to={`/users/${user.id}`} replace />}
+            />
+            <Route path="/users/:id" element={<MyPage user={user} />} />
+            <Route
+              path="/product/:id"
+              element={<ProductDetail products={products} />}
+            />
+            <Route path="/products/:id/edit" element={<ProductEdit />} />
+          </Routes>
+        </main>
+    </div>
     </BrowserRouter>
   );
 }
+
+

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { generateDescription } from "../api/openai"; // ✅ import追加
 
-export default function Sell({ onProductAdded }) {
+export default function Sell({ onProductAdded, user }) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
@@ -44,18 +44,24 @@ export default function Sell({ onProductAdded }) {
       return;
     }
 
+
     const newProduct = {
       name,
       price: Number(price),
       description,
-      imageUrl: imageUrl || "https://placehold.co/400x300",
-      user_hint: userHint || null, // ✅ バックエンドにも送る
-    };
+      imageUrl,
+      seller_id: user?.id,
+      seller_name: user?.name,
+      isPurchased: false, // 新規出品時は未購入
+};
 
     try {
+      const headers = { "Content-Type": "application/json" };
+      if (user?.token) headers.Authorization = `Bearer ${user.token}`;
+
       const res = await fetch(`${API_BASE_URL}/products`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(newProduct),
       });
 
@@ -67,12 +73,11 @@ export default function Sell({ onProductAdded }) {
       }
 
       alert("✅ 商品を出品しました！");
-
       onProductAdded();
       navigate("/");
     } catch (err) {
       console.error(err);
-      alert(" 商品の出品に失敗しました。");
+      alert("商品の出品に失敗しました。");
     }
   };
 

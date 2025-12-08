@@ -1,53 +1,38 @@
-import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
 
-export default function ProductDetail({ products }) {
+export default function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
-    if (products.length > 0) {
-      const found = products.find((p) => p.id === id);
-      setProduct(found || null);
-    }
-  }, [id, products]);
+    const fetchProduct = async () => {
+      const res = await fetch(`${API_BASE_URL}/products/${id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setProduct(data);
+      }
+    };
+    fetchProduct();
+  }, [id, API_BASE_URL]);
 
-  // ✅ productsがまだ読み込まれていない場合
-  if (products.length === 0) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-10 text-center">
-        <p className="text-gray-500 text-lg">読み込み中です...</p>
-      </div>
-    );
-  }
+  if (!product) return <div>読み込み中...</div>;
 
-  // ✅ 商品が存在しない場合
-  if (!product) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-10 text-center">
-        <p className="text-gray-500 text-lg">商品が見つかりません。</p>
-        <Link to="/" className="text-blue-600 hover:underline">
-          商品一覧に戻る
-        </Link>
-      </div>
-    );
-  }
-
-  // ✅ 商品が見つかった場合
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-4">{product.name}</h1>
       <img
         src={product.imageUrl}
         alt={product.name}
-        className="w-full h-80 object-cover rounded-lg shadow-md mb-6"
+        className="w-full h-64 object-cover mb-4"
       />
-      <h2 className="text-3xl font-bold mb-2">{product.name}</h2>
-      <p className="text-xl text-blue-600 font-semibold mb-4">
-        ¥{product.price.toLocaleString()}
-      </p>
-      <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-        {product.description}
-      </p>
+      <div className="mb-2">価格: {product.price}円</div>
+      <div className="mb-2">説明: {product.description}</div>
+      {/* ここで出品者名を表示 */}
+      <div className="mb-2 text-gray-700">
+        出品者: {product.seller?.name || product.seller_name || "不明"}
+      </div>
 
       <Link
         to="/"
