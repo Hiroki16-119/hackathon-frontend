@@ -3,7 +3,6 @@
 export async function generateDescription(name, userHint = "") {
   if (!name) throw new Error("商品名が未入力です");
 
-  // 環境変数（ビルド時） or public/env.js（デプロイ後の差し替え） を参照
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   if (!API_BASE_URL) {

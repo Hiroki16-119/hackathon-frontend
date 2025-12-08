@@ -30,6 +30,16 @@ export default function Navbar({ user, onLogout }) {
             出品
           </Link>
 
+          {/* マイページへのリンク（ログイン時のみ表示） */}
+          {user && (
+            <Link
+              to="/mypage"
+              className="border border-gray-300 rounded-lg px-3 py-1 text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-gray-700 hover:text-blue-600 transition"
+            >
+              マイページ
+            </Link>
+          )}
+
           {/* ✅ ログイン or ログアウト */}
           {user ? (
             <button
@@ -39,9 +49,9 @@ export default function Navbar({ user, onLogout }) {
               ログアウト
             </button>
           ) : (
-            <button className="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition">
+            <Link to="/login" className="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition">
               ログイン
-            </button>
+            </Link>
           )}
         </div>
       </div>

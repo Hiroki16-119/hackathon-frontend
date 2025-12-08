@@ -1,16 +1,20 @@
 import { useState } from "react";
 
 export default function LoginForm({ onLogin }) {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // ダミー認証（パスワードは無視）
-    if (username.trim() !== "") {
-      onLogin(username);
-    } else {
-      alert("ユーザー名を入力してください！");
+    setLoading(true);
+    try {
+      // 必ずオブジェクトで渡す（バックエンドが期待するキー名に合わせる）
+      await onLogin({ email, password });
+    } catch (err) {
+      alert(err.message || "ログインに失敗しました");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -22,24 +26,25 @@ export default function LoginForm({ onLogin }) {
       >
         <h2 className="text-2xl font-bold mb-4 text-center">ログイン</h2>
         <input
-          type="text"
-          placeholder="ユーザー名"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          type="email"
+          placeholder="メールアドレス"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           className="border p-2 rounded w-full mb-4"
         />
         <input
           type="password"
-          placeholder="パスワード（ダミー）"
+          placeholder="パスワード"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="border p-2 rounded w-full mb-4"
         />
         <button
           type="submit"
+          disabled={loading}
           className="bg-blue-500 text-white py-2 px-4 rounded w-full hover:bg-blue-600"
         >
-          ログイン
+          {loading ? "送信中..." : "ログイン"}
         </button>
       </form>
     </div>
