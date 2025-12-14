@@ -1,17 +1,28 @@
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ProductList from "../components/ProductList";
 
 export default function MyPage({ user }) {
   const params = useParams();
-  const userId = params.id || user?.id;
+  const [userId, setUserId] = useState(undefined);
   const [profile, setProfile] = useState(null);
   const [products, setProducts] = useState([]);
   const [purchasedProducts, setPurchasedProducts] = useState([]); // 購入履歴
   const [loading, setLoading] = useState(false);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
+  // userIdを決定
+  useEffect(() => {
+    if (params.id) {
+      setUserId(params.id);
+    } else if (user?.uid) {
+      setUserId(user.uid);
+    }
+  }, [params.id, user]);
+
   const fetchData = async () => {
+    if (!userId) return;
     setLoading(true);
     try {
       // プロフィール取得
@@ -38,7 +49,10 @@ export default function MyPage({ user }) {
   useEffect(() => {
     if (!userId || !API_BASE_URL) return;
     fetchData();
+    // eslint-disable-next-line
   }, [userId, API_BASE_URL]);
+
+  console.log("user:", user, "userId:", userId); // ← 追加
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -50,6 +64,15 @@ export default function MyPage({ user }) {
           <div>名前: {profile?.name || "未設定"}</div>
           <div>メール: {profile?.email || "未設定"}</div>
         </div>
+        {/* 編集ボタンを追加 */}
+        {user && (
+          <Link
+            to={`/users/${user.uid}/edit`}
+            className="inline-block mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            ユーザー情報を編集
+          </Link>
+        )}
       </section>
 
       {/* 出品商品 */}
@@ -62,10 +85,9 @@ export default function MyPage({ user }) {
         ) : (
           <ProductList
             products={products}
-            // 自分のページなら編集機能を有効化
-            isOwn={String(userId) === String(user?.id)}
+            isOwn={String(userId) === String(user?.uid)} // ← 修正
             onUpdated={fetchData}
-            user={user} // ← 追加
+            user={user}
           />
         )}
       </section>

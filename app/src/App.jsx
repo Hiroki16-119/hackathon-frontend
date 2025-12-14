@@ -5,15 +5,16 @@ import Sell from "./pages/Sell";
 import LoginForm from "./components/LoginForm";
 import MyPage from "./pages/MyPage";
 import ProductDetail from "./pages/ProductDetail";
-import useAuth from "./hooks/useAuth";
+import useAuthProvider from "./hooks/useAuth";
 import { useState, useEffect } from "react";
 import ProductEdit from "./pages/ProductEdit";
+import UserEdit from "./pages/UserEdit";
 
   // ✅ 環境変数からAPIのベースURLを取得
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function App() {
-  const { user, login, logout } = useAuth();
+  const { user, login, logout, signup } = useAuthProvider();
   const [products, setProducts] = useState([]);
 
   // ✅ 商品一覧を取得する関数
@@ -34,7 +35,7 @@ export default function App() {
   }, []);
 
   // ✅ ログインしてない場合はログインフォームを表示
-  if (!user) return <LoginForm onLogin={login} />;
+  if (!user) return <LoginForm onLogin={login} onSignup={signup} />;
 
 
   return (
@@ -48,20 +49,12 @@ export default function App() {
         <main className="w-full py-10">
           <Routes>
             <Route path="/" element={<Home products={products} user={user} fetchProducts={fetchProducts} />} />
-            <Route
-              path="/sell"
-              element={<Sell onProductAdded={fetchProducts} user={user} />}
-            />
-            <Route
-              path="/mypage"
-              element={<Navigate to={`/users/${user.id}`} replace />}
-            />
+            <Route path="/sell" element={<Sell onProductAdded={fetchProducts} user={user} />} />
+            <Route path="/mypage" element={<Navigate to={`/users/${user.uid}`} replace />} />
             <Route path="/users/:id" element={<MyPage user={user} />} />
-            <Route
-              path="/product/:id"
-              element={<ProductDetail products={products} />}
-            />
+            <Route path="/products/:id" element={<ProductDetail />} /> {/* ← 修正 */}
             <Route path="/products/:id/edit" element={<ProductEdit />} />
+            <Route path="/users/:id/edit" element={<UserEdit user={user} />} />
           </Routes>
         </main>
     </div>
