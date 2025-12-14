@@ -50,8 +50,8 @@ export default function Sell({ onProductAdded, user }) {
       price: Number(price),
       description,
       imageUrl,
-      seller_id: user?.id,
-      seller_name: user?.name,
+      seller_id: user?.uid,           // ← 修正
+      seller_name: user?.displayName, // ← 修正
       isPurchased: false, // 新規出品時は未購入
 };
 

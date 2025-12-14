@@ -1,4 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
+import { signInWithEmail, signUpWithEmail, auth } from "../a/firebase";
+
+// .envからAPIのベースURLを取得
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function useAuthProvider() {
   const [user, setUser] = useState(null);
@@ -13,55 +17,20 @@ export default function useAuthProvider() {
     }
   }, []);
 
-  const login = useCallback(async (credentials) => {
-    const url = `${import.meta.env.VITE_API_BASE_URL}/login`;
-    console.debug("[login] request url:", url);
-    console.debug("[login] request body:", credentials);
-
+  // Firebaseでログイン
+  const login = useCallback(async ({ email, password }) => {
     try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
-      });
-
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        console.error("[login] failed", res.status, text);
-        throw new Error(text || `ログインに失敗しました (HTTP ${res.status})`);
-      }
-
-      const data = await res.json().catch(() => null);
-      // tokenがなければidを使う
-      const token = data?.token || data?.id || null;
-
-      if (!token) {
-        console.warn("[login] token も id も返ってきませんでした。response:", data);
-      }
-
-      // tokenがあるなら /me 取得、なければ login レスポンス内の user を使う
-      let profile = null;
-      if (token) {
-        const meRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!meRes.ok) {
-          const mtext = await meRes.text().catch(() => "");
-          console.error("[login] /me failed", meRes.status, mtext);
-          throw new Error(mtext || "ユーザー情報の取得に失敗しました");
-        }
-        profile = await meRes.json().catch(() => null);
-      } else {
-        profile = data?.user || data;
-      }
-
-      // tokenを必ずセット
-      const saved = { ...profile, token, id: profile?.id || data?.id || token };
-
-      console.log("saved:", saved);
+      const userCredential = await signInWithEmail(email, password);
+      const firebaseUser = userCredential.user;
+      const token = await firebaseUser.getIdToken();
+      const saved = {
+        email: firebaseUser.email,
+        uid: firebaseUser.uid,
+        token, // ← ここで必ずセット
+        displayName: firebaseUser.displayName,
+      };
       setUser(saved);
-      try { localStorage.setItem("user", JSON.stringify(saved)); } catch (e) { /* ignore */ }
-
+      localStorage.setItem("user", JSON.stringify(saved));
       return saved;
     } catch (err) {
       console.error("[login] exception:", err);
@@ -69,10 +38,54 @@ export default function useAuthProvider() {
     }
   }, []);
 
+  // Firebaseで新規登録
+  const signup = useCallback(async ({ email, password }) => {
+    try {
+      const userCredential = await signUpWithEmail(email, password);
+      const firebaseUser = userCredential.user;
+      const token = await firebaseUser.getIdToken();
+      const saved = {
+        email: firebaseUser.email,
+        uid: firebaseUser.uid,
+        token, // ← ここで必ずセット
+        displayName: firebaseUser.displayName,
+      };
+      setUser(saved);
+      localStorage.setItem("user", JSON.stringify(saved));
+
+      // Firebaseで新規登録後、バックエンドにもユーザー情報を送信
+      try {
+        await fetch(`${API_BASE_URL.replace(/\/+$/, "")}/users`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${saved.token}`,
+          },
+          body: JSON.stringify({
+            uid: saved.uid,
+            email: saved.email,
+            displayName: saved.displayName,
+          }),
+        });
+      } catch (apiErr) {
+        // バックエンド登録失敗時もFirebaseユーザーは維持
+        console.error("[signup] backend user registration failed:", apiErr);
+      }
+
+      return saved;
+    } catch (err) {
+      console.error("[signup] exception:", err);
+      throw err;
+    }
+  }, []);
+
   const logout = useCallback(() => {
     setUser(null);
     try { localStorage.removeItem("user"); } catch (e) { /* ignore */ }
+    auth.signOut();
   }, []);
 
-  return { user, setUser, login, logout };
+  console.log("user:", user);
+
+  return { user, setUser, login, logout, signup };
 }

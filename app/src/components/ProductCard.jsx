@@ -31,11 +31,13 @@ export default function ProductCard({ id, name, price, imageUrl, isPurchased, us
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
-      <img src={imageUrl} alt={name} className="w-full h-48 object-cover" />
-      <div className="p-4 flex-1">
-        <h3 className="text-lg font-semibold text-gray-800">{name}</h3>
-        <p className="text-gray-600 mt-1">¥{price.toLocaleString()}</p>
-      </div>
+      <Link to={`/products/${id}`} className="block hover:opacity-80 transition">
+        <img src={imageUrl} alt={name} className="w-full h-48 object-cover" />
+        <div className="p-4 flex-1">
+          <h3 className="text-lg font-semibold text-gray-800">{name}</h3>
+          <p className="text-gray-600 mt-1">¥{price.toLocaleString()}</p>
+        </div>
+      </Link>
       <div className="px-4 pb-4">
         {isPurchased ? (
           <button
