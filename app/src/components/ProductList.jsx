@@ -14,6 +14,7 @@ export default function ProductList({ products, isOwn, onUpdated, user, onPurcha
             isPurchased={product.is_purchased} // ←ここを修正
             user={user}
             onPurchased={onPurchased}
+            seller_id={product.seller_id }
           />
           {isOwn && (
             <ProductActions product={product} onUpdated={onUpdated} />

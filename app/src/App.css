@@ -1,6 +1,6 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
+  /* max-width: 1280px; 削除またはコメントアウト */
+  /* margin: 0 auto;    削除またはコメントアウト */
   padding: 2rem;
   text-align: center;
 }

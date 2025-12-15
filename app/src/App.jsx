@@ -40,24 +40,22 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      {/* アプリ全体を中央寄せコンテナで包む */}
-      <div className="max-w-7xl mx-auto px-4">
-      {/* Navbar とページ本体を同じ中央コンテナ内に収める */}
-        <Navbar user={user} onLogout={logout} />
-
-      {/* main を分けて余白やレイアウトを付与 */}
+      {/* ナビバーを全画面幅で表示 */}
+      <Navbar user={user} onLogout={logout} />
+      {/* アプリ全体の中央寄せは中身だけに適用 */}
+      <div className="max-w-7xl mx-auto px-4 pt-20">
         <main className="w-full py-10">
           <Routes>
             <Route path="/" element={<Home products={products} user={user} fetchProducts={fetchProducts} />} />
             <Route path="/sell" element={<Sell onProductAdded={fetchProducts} user={user} />} />
             <Route path="/mypage" element={<Navigate to={`/users/${user.uid}`} replace />} />
             <Route path="/users/:id" element={<MyPage user={user} />} />
-            <Route path="/products/:id" element={<ProductDetail />} /> {/* ← 修正 */}
+            <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/products/:id/edit" element={<ProductEdit />} />
             <Route path="/users/:id/edit" element={<UserEdit user={user} />} />
           </Routes>
         </main>
-    </div>
+      </div>
     </BrowserRouter>
   );
 }
