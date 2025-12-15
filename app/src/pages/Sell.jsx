@@ -5,15 +5,15 @@ import { generateDescription } from "../api/openai"; // ✅ import追加
 export default function Sell({ onProductAdded, user }) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [category, setCategory] = useState(""); // カテゴリー追加
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [userHint, setUserHint] = useState(""); // ✅ ユーザー補足情報
   const [loadingDesc, setLoadingDesc] = useState(false);
   const navigate = useNavigate();
 
-    // ✅ 環境変数からAPIのベースURLを取得
+  // ✅ 環境変数からAPIのベースURLを取得
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 
   // ✅ ChatGPT APIで説明を生成
   const handleGenerateDescription = async () => {
@@ -39,8 +39,8 @@ export default function Sell({ onProductAdded, user }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!name || !price) {
-      alert("商品名と価格は必須です！");
+    if (!name || !price || !category) {
+      alert("商品名・価格・カテゴリーは必須です！");
       return;
     }
 
@@ -48,12 +48,13 @@ export default function Sell({ onProductAdded, user }) {
     const newProduct = {
       name,
       price: Number(price),
+      category,
       description,
       imageUrl,
-      seller_id: user?.uid,           // ← 修正
-      seller_name: user?.displayName, // ← 修正
-      isPurchased: false, // 新規出品時は未購入
-};
+      seller_id: user?.uid,
+      seller_name: user?.displayName,
+      isPurchased: false,
+    };
 
     try {
       const headers = { "Content-Type": "application/json" };
@@ -108,6 +109,19 @@ export default function Sell({ onProductAdded, user }) {
             onChange={(e) => setPrice(e.target.value)}
             className="w-full border rounded-md px-3 py-2"
             placeholder="例：2500"
+            required
+          />
+        </div>
+
+        {/* カテゴリー（必須） */}
+        <div>
+          <label className="block font-medium mb-2">カテゴリー（お客様の目に留まりやすくなるよう正確にお願いいたします）</label>
+          <input
+            type="text"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full border rounded-md px-3 py-2"
+            placeholder="例：家電, 本, ファッション"
             required
           />
         </div>

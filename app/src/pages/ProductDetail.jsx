@@ -28,6 +28,8 @@ export default function ProductDetail() {
         className="w-full h-64 object-cover mb-4"
       />
       <div className="mb-2">価格: {product.price}円</div>
+      {/* カテゴリーを表示 */}
+      <div className="mb-2">カテゴリー: {product.category || "未設定"}</div>
       <div className="mb-2">説明: {product.description}</div>
       {/* ここで出品者名を表示 */}
       <div className="mb-2 text-gray-700">
