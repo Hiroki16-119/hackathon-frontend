@@ -2,51 +2,64 @@ import { Link } from "react-router-dom";
 
 export default function Navbar({ user, onLogout }) {
   return (
-    <nav className="w-full bg-white shadow-md sticky top-0 z-50">
-      <div className="w-full flex justify-between items-center px-8 py-4">
-        {/* 左側ロゴ */}
-        <Link 
-          to="/" 
-          className="text-2xl font-bold text-yellow-500 no-underline hover:text-yellow-400 transition"
-        >
-          NextGen Flea
-        </Link>
-        {/* 右側メニュー */}
-        <div className="flex items-center space-x-4">
-          <Link
-            to="/"
-            className="border border-gray-300 rounded-lg px-3 py-1 text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-gray-700 hover:text-blue-600 transition"
-          >
-            ホーム
+    <nav className="w-full sticky top-0 z-50">
+      <div className="backdrop-blur-md bg-white/5 border-b border-white/6">
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
+          {/* 左側ロゴ */}
+          <Link to="/" className="flex items-center gap-3 no-underline">
+            <span className="inline-block w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400 shadow-neon" />
+            <span className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-pink-300">
+              NextGen Flea
+            </span>
           </Link>
-          <Link
-            to="/sell"
-            className="border border-gray-300 rounded-lg px-3 py-1 text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-gray-700 hover:text-blue-600 transition"
-          >
-            出品
-          </Link>
-          {user && (
+
+          {/* 右側メニュー */}
+          <div className="flex items-center gap-3">
             <Link
-              to="/mypage"
-              className="border border-gray-300 rounded-lg px-3 py-1 text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-gray-700 hover:text-blue-600 transition"
+              to="/"
+              className="px-3 py-1 rounded-md text-sm transition hover:bg-white/10 text-slate-200"
             >
-              マイページ
+              ホーム
             </Link>
-          )}
-          {user ? (
-            <button
-              onClick={onLogout}
-              className="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition"
+            <Link
+              to="/sell"
+              className="px-3 py-1 rounded-md text-sm transition hover:bg-white/10 text-slate-200"
             >
-              ログアウト
-            </button>
-          ) : (
-            <Link to="/login" className="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition">
-              ログイン
+              出品
             </Link>
-          )}
+            {user && (
+              <Link
+                to="/mypage"
+                className="px-3 py-1 rounded-md text-sm transition hover:bg-white/10 text-slate-200"
+              >
+                マイページ
+              </Link>
+            )}
+
+            {user ? (
+              <button
+                onClick={onLogout}
+                className="ml-2 px-3 py-1 rounded-md bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm hover:brightness-95 transition shadow-sm"
+              >
+                ログアウト
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="ml-2 px-3 py-1 rounded-md bg-gradient-to-r from-cyan-400 to-violet-400 text-black text-sm font-medium hover:brightness-95 transition shadow-[0_8px_30px_rgba(99,102,241,0.12)]"
+              >
+                ログイン
+              </Link>
+            )}
+          </div>
         </div>
       </div>
+
+      <style>{`
+        .shadow-neon {
+          box-shadow: 0 6px 24px rgba(99,102,241,0.12), inset 0 1px 0 rgba(255,255,255,0.04);
+        }
+      `}</style>
     </nav>
   );
 }

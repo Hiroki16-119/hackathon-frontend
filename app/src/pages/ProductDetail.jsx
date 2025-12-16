@@ -17,15 +17,17 @@ export default function ProductDetail() {
     fetchProduct();
   }, [id, API_BASE_URL]);
 
-  if (!product) return <div>読み込み中...</div>;
+  if (!product) return <div className="relative z-20">読み込み中...</div>;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 py-8 relative z-20">
       <h1 className="text-2xl font-bold mb-4">{product.name}</h1>
       <img
         src={product.imageUrl}
         alt={product.name}
         className="w-full h-64 object-cover mb-4"
+        loading="lazy"
+        onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
       />
       <div className="mb-2">価格: {product.price}円</div>
       {/* カテゴリーを表示 */}

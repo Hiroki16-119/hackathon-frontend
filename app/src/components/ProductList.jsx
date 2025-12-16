@@ -1,26 +1,24 @@
+import React from "react";
 import ProductCard from "./ProductCard";
-import ProductActions from "./ProductActions";
 
-export default function ProductList({ products, isOwn, onUpdated, user, onPurchased }) {
+function ProductList({ products = [], user, onPurchased }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-      {products.map((product) => (
-        <div key={product.id} className="relative">
-          <ProductCard
-            id={product.id}
-            name={product.name}
-            price={product.price}
-            imageUrl={product.imageUrl}
-            isPurchased={product.is_purchased} // ←ここを修正
-            user={user}
-            onPurchased={onPurchased}
-            seller_id={product.seller_id }
-          />
-          {isOwn && (
-            <ProductActions product={product} onUpdated={onUpdated} />
-          )}
-        </div>
+      {products.map((p) => (
+        <ProductCard
+          key={p.id ?? p.product_id}
+          id={p.id ?? p.product_id}
+          name={p.name}
+          price={p.price}
+          imageUrl={p.imageUrl ?? p.image_url}
+          isPurchased={p.isPurchased ?? p.is_purchased}
+          user={user}
+          onPurchased={onPurchased}
+          seller_id={p.seller_id ?? p.seller?.id}
+        />
       ))}
     </div>
   );
 }
+
+export default React.memo(ProductList);
