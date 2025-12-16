@@ -73,8 +73,8 @@ function ProductCardInner({
       }`}
       style={{ backdropFilter: "blur(6px)" }}
     >
-      <a
-        href={`/products/${id}`}
+      <Link
+        to={`/products/${id}`}
         className="block hover:opacity-90 transition"
       >
         <img
@@ -94,7 +94,7 @@ function ProductCardInner({
             </p>
           </div>
         </div>
-      </a>
+      </Link>
 
       <div className="px-4 pb-4">
         {isMine ? (
