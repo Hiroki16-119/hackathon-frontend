@@ -1,7 +1,7 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
-export default function ProductCard({
+function ProductCardInner({
   id,
   name,
   price,
@@ -9,7 +9,7 @@ export default function ProductCard({
   isPurchased,
   user,
   onPurchased,
-  seller_id, // ← 追加: レンダリング側で渡す
+  seller_id,
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -68,34 +68,45 @@ export default function ProductCard({
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-md overflow-hidden flex flex-col border ${
-        isMine ? "border-yellow-400" : "border-transparent"
+      className={`bg-gradient-to-r from-indigo-900/40 to-violet-900/35 rounded-lg overflow-hidden flex flex-col border border-white/6 shadow-lg ${
+        isMine ? "ring-2 ring-yellow-400" : ""
       }`}
+      style={{ backdropFilter: "blur(6px)" }}
     >
-      <Link to={`/products/${id}`} className="block hover:opacity-80 transition">
-        <img src={imageUrl} alt={name} className="w-full h-48 object-cover" />
+      <a
+        href={`/products/${id}`}
+        className="block hover:opacity-90 transition"
+      >
+        <img
+          src={imageUrl}
+          alt={name}
+          loading="lazy" // ← 遅延読み込み
+          className="w-full h-48 object-cover"
+        />
         <div className="p-4 flex-1">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-800">{name}</h3>
-            {isMine && (
-              <span className="text-sm px-2 py-1 bg-yellow-100 text-yellow-800 rounded">自分の商品</span>
-            )}
+            {/* 名前・価格は白のままで見やすく */}
+            <h3 className="text-lg font-semibold text-white" style={{ textShadow: "0 2px 6px rgba(0,0,0,0.6)" }}>
+              {name}
+            </h3>
+            <p className="mt-1 font-semibold text-white" style={{ textShadow: "0 1px 3px rgba(0,0,0,0.6)" }}>
+              ¥{Number(price).toLocaleString()}
+            </p>
           </div>
-          <p className="text-gray-600 mt-1">¥{Number(price).toLocaleString()}</p>
         </div>
-      </Link>
+      </a>
 
       <div className="px-4 pb-4">
         {isMine ? (
           <div className="flex gap-3">
             <Link
               to={`/products/${id}/edit`}
-              className="flex-1 bg-green-600 text-white py-2 rounded-md text-center hover:bg-green-700"
+              className="flex-1 py-2 rounded-md text-center font-medium transition transform hover:scale-[1.01] bg-gradient-to-r from-green-400 to-green-600 text-black shadow-[0_8px_20px_rgba(16,185,129,0.12)]"
             >
               編集
             </Link>
             <button
-              className="flex-1 bg-red-500 text-white py-2 rounded-md hover:bg-red-600"
+              className="flex-1 py-2 rounded-md font-medium transition transform hover:scale-[1.01] bg-gradient-to-r from-red-400 to-red-600 text-white shadow-[0_8px_20px_rgba(239,68,68,0.12)]"
               onClick={handleDelete}
               disabled={loading}
             >
@@ -111,8 +122,9 @@ export default function ProductCard({
           </button>
         ) : (
           <button
-            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+            className="w-full py-2 rounded-md font-semibold transition transform hover:scale-[1.01] bg-gradient-to-r from-cyan-400 to-violet-400 text-black shadow-[0_10px_30px_rgba(56,189,248,0.12)]"
             onClick={() => setIsModalOpen(true)}
+            aria-label={`購入: ${name}`}
           >
             購入する
           </button>
@@ -121,23 +133,26 @@ export default function ProductCard({
 
       {/* モーダル */}
       {!isMine && isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-80 text-center">
-            <h3 className="text-xl font-semibold mb-2">購入確認</h3>
-            <p className="text-gray-700 mb-4">
-              「<span className="font-semibold">{name}</span>」を<br />
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
+          <div className="bg-gradient-to-b from-slate-900/90 to-black rounded-lg shadow-xl p-6 w-80 text-center border border-white/6">
+            <h3 className="text-xl font-semibold mb-2 text-white" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
+              購入確認
+            </h3>
+            <p className="text-white/90 mb-4" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>
+              「<span className="font-semibold">{name}</span>」を
+              <br />
               ¥{Number(price).toLocaleString()} で購入しますか？
             </p>
             <div className="flex justify-between gap-3">
               <button
-                className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-md hover:bg-gray-400"
+                className="flex-1 bg-gray-700 text-white py-2 rounded-md hover:bg-gray-600"
                 onClick={() => setIsModalOpen(false)}
                 disabled={loading}
               >
                 キャンセル
               </button>
               <button
-                className="flex-1 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
+                className="flex-1 bg-sky-500 text-white py-2 rounded-md hover:bg-sky-600"
                 onClick={handlePurchase}
                 disabled={loading}
               >
@@ -150,4 +165,6 @@ export default function ProductCard({
     </div>
   );
 }
+
+export default React.memo(ProductCardInner);
 

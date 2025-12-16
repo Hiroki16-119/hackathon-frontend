@@ -52,57 +52,103 @@ export default function MyPage({ user }) {
     // eslint-disable-next-line
   }, [userId, API_BASE_URL]);
 
-  console.log("user:", user, "userId:", userId); // ← 追加
+  const isOwn = String(userId) === String(user?.uid);
+
+  const initials = (profile?.name || "").split(" ").map(s => s[0]).join("").slice(0,2).toUpperCase();
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">マイページ</h1>
+    <div className="min-h-screen">
+      <div className="max-w-4xl mx-auto px-4 py-10">
+        <div className="bg-gradient-to-r from-indigo-900/50 to-violet-900/40 rounded-2xl p-6 backdrop-blur-md border border-white/6 shadow-lg">
+          {/* ユーザーヘッダー */}
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center text-xl font-bold text-black bg-gradient-to-r from-cyan-300 to-violet-400 shadow-neon">
+              {initials || "U"}
+            </div>
+            <div className="flex-1">
+              <h1 className="text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-pink-300">
+                {profile?.name || "ユーザー名未設定"}
+              </h1>
+              <p className="text-sm text-slate-300 mt-1">{profile?.email || "メール未設定"}</p>
 
-      <section className="mb-6">
-        <h2 className="font-medium">ユーザー情報</h2>
-        <div className="mt-2 text-sm text-gray-700">
-          <div>名前: {profile?.name || "未設定"}</div>
-          <div>メール: {profile?.email || "未設定"}</div>
+              <div className="mt-3 flex items-center gap-3">
+                <div className="text-xs text-slate-300">出品数</div>
+                <div className="px-3 py-1 rounded-full bg-white/6 text-sm">{products.length}</div>
+
+                <div className="text-xs text-slate-300 ml-4">購入履歴</div>
+                <div className="px-3 py-1 rounded-full bg-white/6 text-sm">{purchasedProducts.length}</div>
+              </div>
+            </div>
+
+            <div>
+              {isOwn ? (
+                <Link
+                  to={`/users/${user.uid}/edit`}
+                  className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-cyan-400 to-violet-400 text-black font-medium hover:brightness-95"
+                >
+                  プロフィール編集
+                </Link>
+              ) : null}
+            </div>
+          </div>
+
+          {/* タブ風コントロール */}
+          <div className="mt-6 flex items-center justify-between">
+
+            <div className="flex items-center gap-3">
+              <Link
+                to="/sell"
+                className="px-3 py-1 rounded-md text-sm bg-white/5 text-slate-200 hover:bg-white/10"
+              >
+                新しく出品する
+              </Link>
+            </div>
+          </div>
         </div>
-        {/* 編集ボタンを追加 */}
-        {user && (
-          <Link
-            to={`/users/${user.uid}/edit`}
-            className="inline-block mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            ユーザー情報を編集
-          </Link>
-        )}
-      </section>
 
-      {/* 出品商品 */}
-      <section>
-        <h2 className="font-medium mb-2">出品商品</h2>
-        {loading ? (
-          <div>読み込み中...</div>
-        ) : products.length === 0 ? (
-          <div className="text-gray-500">出品した商品はありません。</div>
-        ) : (
-          <ProductList
-            products={products}
-            isOwn={String(userId) === String(user?.uid)} // ← 修正
-            onUpdated={fetchData}
-            user={user}
-          />
-        )}
-      </section>
+        {/* コンテンツ領域 */}
+        <div className="mt-8 grid grid-cols-1 gap-8">
+          {/* 出品商品 */}
+          <section>
+            <h2 className="text-lg font-semibold text-slate-100 mb-3">出品商品</h2>
+            <div className="bg-white/3 backdrop-blur-sm border border-white/6 rounded-xl p-4">
+              {loading ? (
+                <div className="py-8 text-center text-slate-300">読み込み中...</div>
+              ) : products.length === 0 ? (
+                <div className="py-8 text-center text-slate-400">出品した商品はありません。</div>
+              ) : (
+                <ProductList
+                  products={products}
+                  isOwn={isOwn}
+                  onUpdated={fetchData}
+                  user={user}
+                />
+              )}
+            </div>
+          </section>
 
-      {/* 購入履歴 */}
-      <section className="mt-8">
-        <h2 className="font-medium mb-2">購入した商品</h2>
-        {loading ? (
-          <div>読み込み中...</div>
-        ) : purchasedProducts.length === 0 ? (
-          <div className="text-gray-500">購入した商品はありません。</div>
-        ) : (
-          <ProductList products={purchasedProducts} isOwn={false} user={user} />
-        )}
-      </section>
+          {/* 購入履歴 */}
+          <section>
+            <h2 className="text-lg font-semibold text-slate-100 mb-3">購入履歴</h2>
+            <div className="bg-white/3 backdrop-blur-sm border border-white/6 rounded-xl p-4">
+              {loading ? (
+                <div className="py-8 text-center text-slate-300">読み込み中...</div>
+              ) : purchasedProducts.length === 0 ? (
+                <div className="py-8 text-center text-slate-400">購入した商品はありません。</div>
+              ) : (
+                <ProductList products={purchasedProducts} isOwn={false} user={user} />
+              )}
+            </div>
+          </section>
+        </div>
+
+      </div>
+
+      <style>{`
+        .shadow-neon {
+          box-shadow: 0 8px 30px rgba(99,102,241,0.12);
+        }
+      `}</style>
     </div>
   );
 }

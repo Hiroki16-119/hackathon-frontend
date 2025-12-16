@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import ProductList from "../components/ProductList";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -7,19 +7,20 @@ export default function Home({ products: initialProducts, user, fetchProducts })
   const [products, setProducts] = useState(initialProducts || []);
   const [loadingSort, setLoadingSort] = useState(false);
   const [showOnlyUnpurchased, setShowOnlyUnpurchased] = useState(false);
-  const [sortedByProb, setSortedByProb] = useState(false); // 追加: 並び替え状態
+  const [sortedByProb, setSortedByProb] = useState(false);
 
   useEffect(() => {
     setProducts(initialProducts || []);
-    setSortedByProb(false); // 初期化
+    setSortedByProb(false);
   }, [initialProducts]);
 
-  const filteredProducts = showOnlyUnpurchased
-    ? products.filter(p => !p.is_purchased && !p.isPurchased)
-    : products;
+  const filteredProducts = useMemo(() => {
+    return showOnlyUnpurchased
+      ? products.filter(p => !p.is_purchased && !p.isPurchased)
+      : products;
+  }, [products, showOnlyUnpurchased]);
 
-  // 並べ替え（購入確率）を実行
-  const handleSortByProbability = async () => {
+  const handleSortByProbability = useCallback(async () => {
     if (!user) {
       alert("ログインしてください");
       return;
@@ -56,7 +57,7 @@ export default function Home({ products: initialProducts, user, fetchProducts })
         return ia - ib;
       });
       setProducts(sorted);
-      setSortedByProb(true); // 成功したら状態を true に
+      setSortedByProb(true);
     } catch (err) {
       console.error(err);
       alert("推薦の取得中にエラーが発生しました");
@@ -64,55 +65,103 @@ export default function Home({ products: initialProducts, user, fetchProducts })
     } finally {
       setLoadingSort(false);
     }
-  };
+  }, [user, filteredProducts, products]);
 
-  // デフォルト順に戻す
-  const handleResetDefault = () => {
+  const handleResetDefault = useCallback(() => {
     setProducts(initialProducts || []);
-    setSortedByProb(false); // デフォルト状態に
-  };
+    setSortedByProb(false);
+  }, [initialProducts]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
-      <h2 className="text-2xl font-bold mb-6">人気の商品</h2>
+    <div className="min-h-screen bg-gradient-to-r from-indigo-900/60 via-indigo-800/40 to-violet-900/60 text-slate-100">
+      <div className="max-w-7xl mx-auto px-6 py-12 relative z-20">
+        {/* ヘッダー */}
+        <header className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-3">
+              <span className="inline-block w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400 shadow-neon"></span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-pink-300">NextGen Flea</span>
+            </h1>
+            <p className="text-sm text-white/85 mt-1">近未来のフリマ — あなたに最適な商品をレコメンド</p>
+          </div>
 
-      <div className="mb-4 flex items-center space-x-3">
-        <button
-          className={`px-4 py-2 rounded ${!showOnlyUnpurchased ? "bg-blue-600 text-white" : "bg-gray-200"}`}
-          onClick={() => setShowOnlyUnpurchased(false)}
-        >
-          すべて表示
-        </button>
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-slate-400 mr-2">表示</div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowOnlyUnpurchased(false)}
+                className={`px-3 py-1 rounded-md text-sm transition ${
+                  !showOnlyUnpurchased
+                    ? "bg-gradient-to-r from-cyan-400 to-violet-400 text-black shadow-[0_8px_30px_rgba(99,102,241,0.18)]"
+                    : "bg-white/5 text-slate-200"
+                }`}
+              >
+                すべて
+              </button>
+              <button
+                onClick={() => setShowOnlyUnpurchased(true)}
+                className={`px-3 py-1 rounded-md text-sm transition ${
+                  showOnlyUnpurchased
+                    ? "bg-gradient-to-r from-cyan-400 to-violet-400 text-black shadow-[0_8px_30px_rgba(99,102,241,0.18)]"
+                    : "bg-white/5 text-slate-200"
+                }`}
+              >
+                未購入のみ
+              </button>
+            </div>
+          </div>
+        </header>
 
-        <button
-          className={`px-4 py-2 rounded ${showOnlyUnpurchased ? "bg-blue-600 text-white" : "bg-gray-200"}`}
-          onClick={() => setShowOnlyUnpurchased(true)}
-        >
-          未購入のみ表示
-        </button>
+        {/* メインコンテナ（ガラスモーフィズム） */}
+        <main className="bg-gradient-to-r from-indigo-900/50 to-violet-900/40 rounded-2xl p-6 backdrop-blur-md border border-white/6 shadow-lg">
+          {/* コントロールバー */}
+          <div className="mb-6 flex items-center">
+            <div className="text-lg font-medium text-slate-200">商品一覧</div>
 
-        <div className="ml-auto flex gap-2">
-          <button
-            onClick={handleSortByProbability}
-            className={`px-3 py-1 rounded ${sortedByProb ? "bg-blue-600 text-white" : "bg-gray-200"}`}
-            disabled={loadingSort}
-          >
-            購入確率で並べ替え
-          </button>
-          <button
-            onClick={handleResetDefault}
-            className={`px-3 py-1 rounded ${!sortedByProb ? "bg-blue-600 text-white" : "bg-white border"}`}
-          >
-            デフォルト
-          </button>
-        </div>
+            <div className="ml-auto flex items-center gap-3">
+              <button
+                onClick={handleSortByProbability}
+                disabled={loadingSort}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition transform ${
+                  sortedByProb
+                    ? "bg-gradient-to-r from-cyan-400 to-violet-400 text-black shadow-[0_8px_30px_rgba(99,102,241,0.18)]"
+                    : "bg-white/5 text-slate-200 hover:bg-white/10"
+                }`}
+              >
+                {loadingSort ? "並べ替え中..." : "購入確率で並べ替え"}
+              </button>
+
+              <button
+                onClick={handleResetDefault}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                  !sortedByProb
+                    ? "bg-gradient-to-r from-cyan-400 to-violet-400 text-black shadow-[0_8px_30px_rgba(99,102,241,0.18)]"
+                    : "bg-white/5 text-slate-200 hover:bg-white/10"
+                }`}
+              >
+                デフォルト
+              </button>
+            </div>
+          </div>
+
+          {/* 商品リスト */}
+          <div className="mt-4">
+            <ProductList
+              products={filteredProducts}
+              user={user}
+              onPurchased={fetchProducts}
+            />
+          </div>
+        </main>
+
+        {/* footer accent */}
+        <footer className="mt-8 text-center text-xs text-slate-500">
+          <div className="inline-block px-3 py-1 rounded-full bg-white/3 border border-white/6">
+            AI レコメンドによるパーソナライズ表示
+          </div>
+        </footer>
       </div>
 
-      <ProductList
-        products={filteredProducts}
-        user={user}
-        onPurchased={fetchProducts}
-      />
     </div>
   );
 }
