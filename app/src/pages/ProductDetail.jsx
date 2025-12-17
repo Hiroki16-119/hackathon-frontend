@@ -11,12 +11,13 @@ export default function ProductDetail() {
   const PLACEHOLDER_DATA_URL =
     "data:image/svg+xml;utf8," +
     encodeURIComponent(
-      `<svg xmlns='http://www.w3.org/2000/svg' width='512' height='320'><rect width='100%' height='100%' fill='%23f3f4f6'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-family='Arial, Helvetica, sans-serif' font-size='20'>No image</text></svg>`
+      `<svg xmlns='http://www.w3.org/2000/svg' width='512' height='320' role='img' aria-label='No image'><rect width='100%' height='100%' fill='%23f3f4f6'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23888' font-family='Arial, Helvetica, sans-serif' font-size='22'>Not image</text></svg>`
     );
 
   const resolveImageUrl = (img) => {
-    if (!img) return "/placeholder.png";
-    if (typeof img !== "string") return "/placeholder.png";
+    // 画像が無ければネットワークリクエストを発生させずにインラインSVGを返す
+    if (!img) return PLACEHOLDER_DATA_URL;
+    if (typeof img !== "string") return PLACEHOLDER_DATA_URL;
     if (img.startsWith("http://") || img.startsWith("https://") || img.startsWith("data:")) return img;
     const base = (API_BASE_URL || window.location.origin).replace(/\/$/, "");
     return img.startsWith("/") ? `${base}${img}` : `${base}/${img}`;

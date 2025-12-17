@@ -56,18 +56,16 @@ function ProductCard({
   // 画像URL解決ヘルパー：絶対URL / data: はそのまま、相対パスなら API_BASE_URL を付与
   const resolveImageUrl = (img) => {
     if (!img) return PLACEHOLDER_DATA_URL;
-    if (typeof img !== "string") return "/placeholder.png";
+    if (typeof img !== "string") return PLACEHOLDER_DATA_URL;
     if (img.startsWith("http://") || img.startsWith("https://") || img.startsWith("data:")) return img;
     const base = (API_BASE_URL || window.location.origin).replace(/\/$/, "");
-    if (img.startsWith("/")) return `${base}${img}`; // e.g. /static/...
-    return `${base}/${img}`; // e.g. static/...
+    return img.startsWith("/") ? `${base}${img}` : `${base}/${img}`;
   };
 
   const handlePurchase = async () => {
     if (!confirm("本当に購入しますか？")) return;
     setLoading(true);
     try {
-      // requireAuth:true で Firebase のログイン状態を待ち、トークンを付与して呼ぶ
       const res = await authFetch(`/products/${id}/purchase`, { method: "POST" }, { requireAuth: true });
 
       if (res.status === 401) {
@@ -82,7 +80,10 @@ function ProductCard({
         return;
       }
       alert("購入しました");
-      // 必要ならここで親に更新通知や画面更新を行う
+      // モーダルを閉じて UI を安定させる
+      setIsModalOpen(false);
+      // 必要なら親へ更新通知を送る（props.onPurchased など）
+      if (typeof props.onPurchased === "function") props.onPurchased(id);
     } catch (err) {
       console.error("purchase error:", err);
       alert("購入中にエラーが発生しました");
