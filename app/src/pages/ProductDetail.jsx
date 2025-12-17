@@ -1,29 +1,71 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import authFetch from "../lib/authFetch"; // 既に作成済みなら使う（無ければ通常 fetch のまま）
 
 export default function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const [error, setError] = useState("");
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
+  const resolveImageUrl = (img) => {
+    if (!img) return "/placeholder.png";
+    if (typeof img !== "string") return "/placeholder.png";
+    if (img.startsWith("http://") || img.startsWith("https://") || img.startsWith("data:")) return img;
+    const base = (API_BASE_URL || window.location.origin).replace(/\/$/, "");
+    return img.startsWith("/") ? `${base}${img}` : `${base}/${img}`;
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
-      const res = await fetch(`${API_BASE_URL}/products/${id}`);
-      if (res.ok) {
+      try {
+        // authFetch を使えるなら使って認証状態に応じた呼び出しを行う
+        const res = await (typeof authFetch === "function"
+          ? authFetch(`/products/${id}`, { method: "GET" }, { requireAuth: false })
+          : fetch(`${API_BASE_URL}/products/${id}`));
+
+        if (res.status === 403) {
+          setError("この商品の閲覧には認証が必要です。ログインしてください。");
+          return;
+        }
+        if (res.status === 404) {
+          setError("商品が見つかりませんでした。");
+          return;
+        }
+        if (!res.ok) {
+          const txt = await res.text();
+          setError(`商品の取得に失敗しました (${res.status})`);
+          console.error("ProductDetail fetch failed:", res.status, txt);
+          return;
+        }
         const data = await res.json();
         setProduct(data);
+      } catch (err) {
+        console.error("ProductDetail fetch error:", err);
+        setError("ネットワークエラーで商品情報を取得できませんでした。");
       }
     };
     fetchProduct();
   }, [id, API_BASE_URL]);
 
+  if (error) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8 relative z-20 text-red-400">
+        エラー: {error}
+        <div className="mt-4">
+          <Link to="/login" className="text-blue-400 underline">ログインする</Link>{" "}
+          または <Link to="/" className="text-blue-400 underline">一覧に戻る</Link>
+        </div>
+      </div>
+    );
+  }
   if (!product) return <div className="relative z-20">読み込み中...</div>;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 relative z-20">
       <h1 className="text-2xl font-bold mb-4">{product.name}</h1>
       <img
-        src={product.imageUrl}
+        src={resolveImageUrl(product.imageUrl ?? product.image_url)}
         alt={product.name}
         className="w-full h-64 object-cover mb-4"
         loading="lazy"
