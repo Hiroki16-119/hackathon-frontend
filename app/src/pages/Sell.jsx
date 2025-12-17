@@ -12,9 +12,12 @@ export default function Sell({ onProductAdded, user }) {
   const [userHint, setUserHint] = useState("");
   const [loadingDesc, setLoadingDesc] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const navigate = useNavigate();
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState("");
+
+  const navigate = useNavigate();
+  const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 
   const handleGenerateDescription = async () => {
     if (!name) {
@@ -33,6 +36,24 @@ export default function Sell({ onProductAdded, user }) {
     }
   };
 
+  const onFileChange = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (!f.type.startsWith("image/")) return alert("画像を選択してください");
+    if (f.size > 12 * 1024 * 1024) return alert("12MB以下の画像を選んでください");
+    setFile(f);
+    const fr = new FileReader();
+    fr.onload = () => {
+      setPreview(fr.result);
+      // imageUrl フィールドは外部URLを受け付けるので preview は別で管理
+    };
+    fr.onerror = (err) => {
+      console.error("FileReader error", err);
+      alert("画像の読み込みに失敗しました");
+    };
+    fr.readAsDataURL(f);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !price || !category) {
@@ -41,56 +62,56 @@ export default function Sell({ onProductAdded, user }) {
     }
 
     setSubmitting(true);
-    // 最新の Firebase ID token を取得（強制更新）
     let token = user?.token || null;
     try {
       const auth = getAuth();
-      if (auth?.currentUser) {
-        token = await auth.currentUser.getIdToken(true);
-      }
+      if (auth?.currentUser) token = await auth.currentUser.getIdToken(true);
     } catch (err) {
       console.warn("getIdToken error:", err);
     }
 
-    const newProduct = {
-      name,
-      price: Number(price),
-      category,
-      description,
-      imageUrl,
-      seller_id: user?.uid,
-      seller_name: user?.displayName,
-      isPurchased: false,
-    };
-
     try {
-      const headers = { "Content-Type": "application/json" };
+      const form = new FormData();
+      form.append("name", name);
+      form.append("price", String(Number(price) || 0));
+      form.append("category", category);
+      form.append("description", description || "");
+      // 優先順: 選択したファイルを送る。無ければ imageUrl テキストを送る（バックエンドで扱える想定）
+      if (file) {
+        form.append("image", file);
+      } else if (imageUrl) {
+        form.append("imageUrl", imageUrl);
+      }
+
+      const headers = {};
       if (token) headers.Authorization = `Bearer ${token}`;
 
       const res = await fetch(`${API_BASE_URL}/products`, {
         method: "POST",
         headers,
-        body: JSON.stringify(newProduct),
+        body: form,
       });
 
       const text = await res.text();
       let data;
       try { data = JSON.parse(text); } catch { data = text; }
 
-      console.log("response status:", res.status, data);
-
       if (!res.ok) {
-        console.error("Backend error:", data);
-        alert("出品に失敗しました");
+        console.error("backend save failed:", res.status, data);
+        const msg = (data && data.message) || (data && data.detail) || "サーバ保存に失敗しました";
+        alert(`サーバ保存に失敗しました: ${msg}`);
+        // ここで処理を止めずローカル保存にフォールバックしたければ追加実装
         return;
       }
 
-      alert("✅ 商品を出品しました！");
-      onProductAdded();
-      navigate("/");
+      // サーバから返された ID を使って遷移（data.id / data.product?.id を想定）
+      const newId = (data && (data.id || data.product?.id)) || `prod_${Date.now()}`;
+      alert("✅ 出品しました（サーバへ保存済み）");
+      if (typeof onProductAdded === "function") onProductAdded();
+      navigate(`/products/${newId}`);
     } catch (err) {
-      console.error(err);
-      alert("商品の出品に失敗しました。");
+      console.error("submit error:", err);
+      alert("出品中にエラーが発生しました");
     } finally {
       setSubmitting(false);
     }
@@ -186,20 +207,27 @@ export default function Sell({ onProductAdded, user }) {
               />
             </label>
 
-            <label className="block">
-              <div className="text-sm text-slate-200 mb-2">画像URL（任意）</div>
-              <input
-                type="text"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                className="w-full rounded-lg px-4 py-3 bg-white/5 border border-white/6 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-                placeholder="例：https://example.com/image.jpg"
-              />
-            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="block">
+                <div className="text-sm text-slate-200 mb-2">画像URL（任意）</div>
+                <input
+                  type="text"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  className="w-full rounded-lg px-4 py-3 bg-white/5 border border-white/6 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  placeholder="例：https://example.com/image.jpg"
+                />
+              </label>
 
-            {imageUrl && (
+              <label className="block">
+                <div className="text-sm text-slate-200 mb-2">画像を選択（サーバへアップロード）</div>
+                <input type="file" accept="image/*" onChange={onFileChange} className="w-full text-sm" />
+              </label>
+            </div>
+
+            {(preview || imageUrl) && (
               <div className="rounded-lg overflow-hidden border border-white/6">
-                <img src={imageUrl} alt="preview" className="w-full h-48 object-cover" />
+                <img src={preview || imageUrl} alt="preview" className="w-full h-48 object-cover" />
               </div>
             )}
 

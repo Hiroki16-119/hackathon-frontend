@@ -16,6 +16,15 @@ function ProductCardInner({
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
   const isMine = Boolean(user && seller_id && seller_id === user.uid);
+  // 画像URL解決ヘルパー：絶対URL / data: はそのまま、相対パスなら API_BASE_URL を付与
+  const resolveImageUrl = (img) => {
+    if (!img) return "/placeholder.png";
+    if (typeof img !== "string") return "/placeholder.png";
+    if (img.startsWith("http://") || img.startsWith("https://") || img.startsWith("data:")) return img;
+    const base = (API_BASE_URL || window.location.origin).replace(/\/$/, "");
+    if (img.startsWith("/")) return `${base}${img}`; // e.g. /static/...
+    return `${base}/${img}`; // e.g. static/...
+  };
 
   const handlePurchase = async () => {
     setLoading(true);
@@ -78,7 +87,7 @@ function ProductCardInner({
         className="block hover:opacity-90 transition"
       >
         <img
-          src={imageUrl}
+          src={resolveImageUrl(imageUrl)}
           alt={name}
           loading="lazy" // ← 遅延読み込み
           className="w-full h-48 object-cover"
