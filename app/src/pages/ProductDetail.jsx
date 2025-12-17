@@ -8,6 +8,12 @@ export default function ProductDetail() {
   const [error, setError] = useState("");
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
+  const PLACEHOLDER_DATA_URL =
+    "data:image/svg+xml;utf8," +
+    encodeURIComponent(
+      `<svg xmlns='http://www.w3.org/2000/svg' width='512' height='320'><rect width='100%' height='100%' fill='%23f3f4f6'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-family='Arial, Helvetica, sans-serif' font-size='20'>No image</text></svg>`
+    );
+
   const resolveImageUrl = (img) => {
     if (!img) return "/placeholder.png";
     if (typeof img !== "string") return "/placeholder.png";
@@ -69,7 +75,12 @@ export default function ProductDetail() {
         alt={product.name}
         className="w-full h-64 object-cover mb-4"
         loading="lazy"
-        onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+        onError={(e) => {
+          if (!e.currentTarget.dataset.fallback) {
+            e.currentTarget.dataset.fallback = "1";
+            e.currentTarget.src = PLACEHOLDER_DATA_URL;
+          }
+        }}
       />
       <div className="mb-2">価格: {product.price}円</div>
       {/* カテゴリーを表示 */}
