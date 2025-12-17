@@ -1,18 +1,48 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import authFetch from "../lib/authFetch";
 
-function ProductCardInner({
+function ProductCard({
   id,
   name,
   price,
   imageUrl,
-  isPurchased,
-  user,
-  onPurchased,
   seller_id,
+  user,
+  ...props
 }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const [loading, setLoading] = React.useState(false);
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  // 購入済フラグは複数形態を許容して解決
+  const isPurchased = Boolean(props.isPurchased ?? props.is_purchased ?? props.purchased ?? false);
+  // 商品削除ハンドラ（オーナー用）
+  const handleDelete = async () => {
+    if (!confirm("本当に削除しますか？")) return;
+    setLoading(true);
+    try {
+      const res = await authFetch(`/products/${id}`, { method: "DELETE" }, { requireAuth: true });
+      if (res.status === 401) {
+        alert("ログインが必要です。ログインページへ移動します。");
+        navigate("/login");
+        return;
+      }
+      if (!res.ok) {
+        const txt = await res.text();
+        console.error("delete failed:", res.status, txt);
+        alert("削除に失敗しました");
+        return;
+      }
+      alert("削除しました");
+      navigate("/");
+    } catch (err) {
+      console.error("delete error:", err);
+      alert("削除中にエラーが発生しました");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
   const isMine = Boolean(user && seller_id && seller_id === user.uid);
@@ -27,49 +57,28 @@ function ProductCardInner({
   };
 
   const handlePurchase = async () => {
+    if (!confirm("本当に購入しますか？")) return;
     setLoading(true);
     try {
-      const headers = { "Content-Type": "application/json" };
-      if (user?.token) headers.Authorization = `Bearer ${user.token}`;
-      const res = await fetch(`${API_BASE_URL}/products/${id}/purchase`, {
-        method: "POST",
-        headers,
-      });
-      if (res.ok) {
-        alert(`「${name}」を購入しました！`);
-        if (onPurchased) onPurchased();
-      } else {
-        alert("購入に失敗しました");
-      }
-    } catch (e) {
-      alert("通信エラーが発生しました");
-    } finally {
-      setLoading(false);
-      setIsModalOpen(false);
-    }
-  };
+      // requireAuth:true で Firebase のログイン状態を待ち、トークンを付与して呼ぶ
+      const res = await authFetch(`/products/${id}/purchase`, { method: "POST" }, { requireAuth: true });
 
-  const handleDelete = async () => {
-    if (!confirm("本当にこの商品を削除しますか？")) return;
-    setLoading(true);
-    try {
-      const headers = { "Content-Type": "application/json" };
-      if (user?.token) headers.Authorization = `Bearer ${user.token}`;
-      const res = await fetch(`${API_BASE_URL}/products/${id}`, {
-        method: "DELETE",
-        headers,
-      });
-      if (res.ok) {
-        alert("商品を削除しました");
-        if (onPurchased) onPurchased(); // リスト更新用コールバック流用
-      } else {
-        const text = await res.text();
-        console.error("delete failed:", res.status, text);
-        alert("削除に失敗しました");
+      if (res.status === 401) {
+        alert("ログインが必要です。ログインページへ移動します。");
+        navigate("/login");
+        return;
       }
-    } catch (e) {
-      console.error(e);
-      alert("通信エラーが発生しました");
+      if (!res.ok) {
+        const txt = await res.text();
+        console.error("purchase failed:", res.status, txt);
+        alert("購入に失敗しました");
+        return;
+      }
+      alert("購入しました");
+      // 必要ならここで親に更新通知や画面更新を行う
+    } catch (err) {
+      console.error("purchase error:", err);
+      alert("購入中にエラーが発生しました");
     } finally {
       setLoading(false);
     }
@@ -175,5 +184,5 @@ function ProductCardInner({
   );
 }
 
-export default React.memo(ProductCardInner);
+export default React.memo(ProductCard);
 
