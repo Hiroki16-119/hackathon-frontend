@@ -45,10 +45,17 @@ function ProductCard({
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
+  // シンプルなインラインSVGをフォールバックにして 404 を防ぐ
+  const PLACEHOLDER_DATA_URL =
+    "data:image/svg+xml;utf8," +
+    encodeURIComponent(
+      `<svg xmlns='http://www.w3.org/2000/svg' width='512' height='320'><rect width='100%' height='100%' fill='%23f3f4f6'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-family='Arial, Helvetica, sans-serif' font-size='20'>No image</text></svg>`
+    );
+
   const isMine = Boolean(user && seller_id && seller_id === user.uid);
   // 画像URL解決ヘルパー：絶対URL / data: はそのまま、相対パスなら API_BASE_URL を付与
   const resolveImageUrl = (img) => {
-    if (!img) return "/placeholder.png";
+    if (!img) return PLACEHOLDER_DATA_URL;
     if (typeof img !== "string") return "/placeholder.png";
     if (img.startsWith("http://") || img.startsWith("https://") || img.startsWith("data:")) return img;
     const base = (API_BASE_URL || window.location.origin).replace(/\/$/, "");
@@ -98,8 +105,15 @@ function ProductCard({
         <img
           src={resolveImageUrl(imageUrl)}
           alt={name}
-          loading="lazy" // ← 遅延読み込み
+          loading="lazy"
           className="w-full h-48 object-cover"
+          onError={(e) => {
+            // ループ防止：一度だけ data-url に切り替える
+            if (!e.currentTarget.dataset.fallback) {
+              e.currentTarget.dataset.fallback = "1";
+              e.currentTarget.src = PLACEHOLDER_DATA_URL;
+            }
+          }}
         />
         <div className="p-4 flex-1">
           <div className="flex items-center justify-between">
