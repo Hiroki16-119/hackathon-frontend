@@ -3,6 +3,7 @@ import { useState } from "react";
 export default function LoginForm({ onLogin, onSignup }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -13,8 +14,12 @@ export default function LoginForm({ onLogin, onSignup }) {
     setLoading(true);
     try {
       if (isSignUp) {
-        await onSignup({ email, password });
-        alert("新規登録に成功しました！");
+        if (!displayName || !displayName.trim()) {
+          setError("ユーザー名（表示名）は必須です");
+          setLoading(false);
+          return;
+        }
+        await onSignup({ email, password, displayName: displayName.trim() });
       } else {
         await onLogin({ email, password });
       }
@@ -31,6 +36,17 @@ export default function LoginForm({ onLogin, onSignup }) {
         {isSignUp ? "新規登録" : "ログイン"}
       </h2>
       {error && <div className="mb-2 text-red-400 text-center">{error}</div>}
+
+      {isSignUp && (
+        <input
+          type="text"
+          placeholder="ユーザー名（表示名）"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          className="border p-3 rounded w-full mb-3 bg-transparent text-white placeholder:text-white/60 border-white/14 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+          aria-label="ユーザー名"
+        />
+      )}
 
       <input
         type="email"
