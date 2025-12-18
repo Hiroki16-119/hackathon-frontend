@@ -82,13 +82,11 @@ export default function Sell({ onProductAdded, user }) {
       let uploadedReadUrl = null;
       if (file) {
         // 署名付きURL取得（バックエンドに filename を渡す）
+        // FastAPI 側が filename を query で受け取る実装のため、クエリに filename を付与して呼ぶ
+        const qs = `?filename=${encodeURIComponent(file.name)}`;
         const uploadReq = await authFetch(
-          `/images/upload-url`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ filename: file.name }),
-          },
+          `/images/upload-url${qs}`,
+          { method: "POST" }, // ボディ不要
           { requireAuth: true }
         );
 
