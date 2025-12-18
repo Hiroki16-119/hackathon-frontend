@@ -53,7 +53,7 @@ export default function UserEdit({ user }) {
         <label className="block mb-2">
           名前:
           <input
-            className="border p-2 w-full"
+            className="border p-2 w-full bg-slate-900 text-white placeholder:text-white/60 border-white/12 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-cyan-400"
             value={name}
             onChange={e => setName(e.target.value)}
           />
@@ -61,14 +61,14 @@ export default function UserEdit({ user }) {
         <label className="block mb-2">
           メールアドレス:
           <input
-            className="border p-2 w-full"
+            className="border p-2 w-full bg-slate-900 text-white placeholder:text-white/60 border-white/12 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-cyan-400"
             value={email}
             onChange={e => setEmail(e.target.value)}
             type="email"
           />
         </label>
         <button
-          className="bg-blue-600 text-white px-4 py-2 rounded mt-4"
+          className="bg-blue-600 text-white px-4 py-2 rounded mt-4 disabled:opacity-60"
           type="submit"
           disabled={loading}
         >
