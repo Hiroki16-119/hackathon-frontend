@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { generateDescription } from "../api/openai";
 import { getAuth } from "firebase/auth";
+import authFetch from "../lib/authFetch";
 
 export default function Sell({ onProductAdded, user }) {
   const [name, setName] = useState("");
@@ -76,9 +77,50 @@ export default function Sell({ onProductAdded, user }) {
       form.append("price", String(Number(price) || 0));
       form.append("category", category);
       form.append("description", description || "");
-      // 優先順: 選択したファイルを送る。無ければ imageUrl テキストを送る（バックエンドで扱える想定）
+
+      // ファイルがある場合は backend からアップロード用署名付きURLを取得して直接 GCS に PUT する
+      let uploadedReadUrl = null;
       if (file) {
-        form.append("image", file);
+        // 署名付きURL取得（バックエンドに filename を渡す）
+        const uploadReq = await authFetch(
+          `/images/upload-url`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ filename: file.name }),
+          },
+          { requireAuth: true }
+        );
+
+        if (!uploadReq.ok) {
+          const txt = await uploadReq.text().catch(() => "");
+          throw new Error(`アップロード用URL取得に失敗しました (${uploadReq.status}) ${txt}`);
+        }
+
+        const uploadData = await uploadReq.json();
+        const { upload_url: uploadUrl, read_url: readUrl } = uploadData;
+
+        if (!uploadUrl) throw new Error("アップロードURLが返りませんでした");
+
+        // GCSへ直接PUT
+        const putRes = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": file.type || "application/octet-stream" },
+          body: file,
+        });
+
+        if (!putRes.ok) {
+          const txt = await putRes.text().catch(() => "");
+          throw new Error(`GCS へのアップロードに失敗しました (${putRes.status}) ${txt}`);
+        }
+
+        // readUrl が返っていればそれを使い、無ければバックエンドに保存された filename を送る設計に合わせて調整
+        uploadedReadUrl = readUrl || uploadData.filename || null;
+      }
+
+      // 画像は file を直接送らず、read URL（またはファイルパス）を送る
+      if (uploadedReadUrl) {
+        form.append("imageUrl", uploadedReadUrl);
       } else if (imageUrl) {
         form.append("imageUrl", imageUrl);
       }
@@ -100,18 +142,16 @@ export default function Sell({ onProductAdded, user }) {
         console.error("backend save failed:", res.status, data);
         const msg = (data && data.message) || (data && data.detail) || "サーバ保存に失敗しました";
         alert(`サーバ保存に失敗しました: ${msg}`);
-        // ここで処理を止めずローカル保存にフォールバックしたければ追加実装
         return;
       }
 
-      // サーバから返された ID を使って遷移（data.id / data.product?.id を想定）
       const newId = (data && (data.id || data.product?.id)) || `prod_${Date.now()}`;
       alert("✅ 出品しました（サーバへ保存済み）");
       if (typeof onProductAdded === "function") onProductAdded();
       navigate(`/products/${newId}`);
     } catch (err) {
       console.error("submit error:", err);
-      alert("出品中にエラーが発生しました");
+      alert("出品中にエラーが発生しました: " + (err.message || ""));
     } finally {
       setSubmitting(false);
     }
