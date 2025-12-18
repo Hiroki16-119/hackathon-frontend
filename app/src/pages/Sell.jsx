@@ -72,23 +72,15 @@ export default function Sell({ onProductAdded, user }) {
     }
 
     try {
-      const form = new FormData();
-      form.append("name", name);
-      form.append("price", String(Number(price) || 0));
-      form.append("category", category);
-      form.append("description", description || "");
+      // 優先順位: ファイルアップロード (GCS の readUrl) > 手動入力の imageUrl
+      let finalImageUrl = imageUrl || "";
 
       // ファイルがある場合は backend からアップロード用署名付きURLを取得して直接 GCS に PUT する
-      let uploadedReadUrl = null;
       if (file) {
-        // 署名付きURL取得（バックエンドに filename を渡す）
-        // FastAPI 側が filename を query で受け取る実装のため、クエリに filename を付与して呼ぶ
-        const qs = `?filename=${encodeURIComponent(file.name)}`;
-        const uploadReq = await authFetch(
-          `/images/upload-url${qs}`,
-          { method: "POST" }, // ボディ不要
-          { requireAuth: true }
-        );
+        const uploadUrlEndpoint = `${API_BASE_URL}/images/upload-url?filename=${encodeURIComponent(file.name)}`;
+        console.debug("request upload-url:", uploadUrlEndpoint);
+
+        const uploadReq = await authFetch(uploadUrlEndpoint, { method: "POST" }, { requireAuth: true });
 
         if (!uploadReq.ok) {
           const txt = await uploadReq.text().catch(() => "");
@@ -112,16 +104,18 @@ export default function Sell({ onProductAdded, user }) {
           throw new Error(`GCS へのアップロードに失敗しました (${putRes.status}) ${txt}`);
         }
 
-        // readUrl が返っていればそれを使い、無ければバックエンドに保存された filename を送る設計に合わせて調整
-        uploadedReadUrl = readUrl || uploadData.filename || null;
+        // アップロード成功したら readUrl を優先して使う
+        finalImageUrl = readUrl || uploadData.filename || finalImageUrl;
       }
 
-      // 画像は file を直接送らず、read URL（またはファイルパス）を送る
-      if (uploadedReadUrl) {
-        form.append("imageUrl", uploadedReadUrl);
-      } else if (imageUrl) {
-        form.append("imageUrl", imageUrl);
-      }
+      // FormData でバックエンドに送信（バックエンドは image_url を期待）
+      const form = new FormData();
+      form.append("name", name);
+      form.append("price", String(Number(price) || 0));
+      form.append("category", category);
+      form.append("description", description || "");
+      form.append("image_url", finalImageUrl || "");
+      form.append("user_hint", userHint || "");
 
       const headers = {};
       if (token) headers.Authorization = `Bearer ${token}`;
