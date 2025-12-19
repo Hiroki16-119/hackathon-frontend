@@ -72,40 +72,38 @@ export default function Sell({ onProductAdded, user }) {
     }
 
     try {
-      // 優先順位: ファイルアップロード (GCS の readUrl) > 手動入力の imageUrl
+      // 優先順位: ファイルアップロード (バックエンド経由でGCSにアップロード) > 手動入力の imageUrl
       let finalImageUrl = imageUrl || "";
 
-      // ファイルがある場合は backend からアップロード用署名付きURLを取得して直接 GCS に PUT する
+      // ファイルがある場合：バックエンドの /images/upload に送って
+      // サーバ側で GCS にアップロードしてもらい、返却された公開URLを使う
       if (file) {
-        const uploadUrlEndpoint = `${API_BASE_URL}/images/upload-url?filename=${encodeURIComponent(file.name)}`;
-        console.debug("request upload-url:", uploadUrlEndpoint);
+        const uploadEndpoint = `${API_BASE_URL}/images/upload`;
+        const uploadForm = new FormData();
+        uploadForm.append("file", file, file.name);
 
-        const uploadReq = await authFetch(uploadUrlEndpoint, { method: "POST" }, { requireAuth: true });
+        const headersForUpload = {};
+        if (token) headersForUpload.Authorization = `Bearer ${token}`;
 
-        if (!uploadReq.ok) {
-          const txt = await uploadReq.text().catch(() => "");
-          throw new Error(`アップロード用URL取得に失敗しました (${uploadReq.status}) ${txt}`);
-        }
-
-        const uploadData = await uploadReq.json();
-        const { upload_url: uploadUrl, read_url: readUrl } = uploadData;
-
-        if (!uploadUrl) throw new Error("アップロードURLが返りませんでした");
-
-        // GCSへ直接PUT
-        const putRes = await fetch(uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": file.type || "application/octet-stream" },
-          body: file,
+        const uploadRes = await fetch(uploadEndpoint, {
+          method: "POST",
+          headers: headersForUpload, // Content-Type を指定しない（ブラウザが FormData 用を自動設定）
+          body: uploadForm,
         });
 
-        if (!putRes.ok) {
-          const txt = await putRes.text().catch(() => "");
-          throw new Error(`GCS へのアップロードに失敗しました (${putRes.status}) ${txt}`);
+        if (!uploadRes.ok) {
+          const txt = await uploadRes.text().catch(() => "");
+          throw new Error(`画像アップロードに失敗しました (${uploadRes.status}) ${txt}`);
         }
 
-        // アップロード成功したら readUrl を優先して使う
-        finalImageUrl = readUrl || uploadData.filename || finalImageUrl;
+        const uploadData = await uploadRes.json().catch(() => ({}));
+        // バックエンドが返すキーに合わせて順にチェック
+        const returnedUrl = uploadData.url || uploadData.public_url || uploadData.read_url || null;
+        if (!returnedUrl) {
+          throw new Error("アップロード後の公開URLが返却されませんでした");
+        }
+
+        finalImageUrl = returnedUrl;
       }
 
       // FormData でバックエンドに送信（バックエンドは image_url を期待）
