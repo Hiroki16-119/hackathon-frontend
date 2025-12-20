@@ -45,8 +45,18 @@ export default function Sell({ onProductAdded, user }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !price || !category) {
-      alert("商品名・価格・カテゴリーは必須です！");
+
+    // 空白のみを許容しない（trim してチェック）
+    if (!name || !name.trim()) {
+      alert("名前を入力してください!!");
+      return;
+    }
+    if (!price || String(price).trim() === "") {
+      alert("価格を入力してください!!");
+      return;
+    }
+    if (!category || !category.trim()) {
+      alert("カテゴリーを入力してください!!");
       return;
     }
 
