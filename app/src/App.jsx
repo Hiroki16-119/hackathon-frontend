@@ -32,22 +32,14 @@ export default function App() {
     fetchProducts();
   }, []);
 
-  // ログイン検知で自動的にホームへ移動（ログインページにいる場合）
-  useEffect(() => {
-    if (user) {
-      // 現在 /login にいるときのみ自動遷移（リロードせず確実に遷移したければ window.location.replace を使ってください）
-      if (window.location.pathname === "/login") {
-        window.location.replace("/");
-      }
-    }
-  }, [user]);
+  // user の変化で強制的に window.location.replace を行うと、
+  // 認証初期化時の一時的な null による / <-> /login のループの原因になるため削除しました。
+  // 代わりに /login ルート側で user が存在する場合は <Navigate /> で安全にリダイレクトします。
 
   return (
     <BrowserRouter>
       <div className="min-h-screen relative text-slate-100">
         <Background />
-
-  
 
         {/* ナビバーはログイン後のみ表示 */}
         {user && <Navbar user={user} onLogout={logout} />}
@@ -59,7 +51,14 @@ export default function App() {
               {/* 公開 / ログイン */}
               <Route
                 path="/login"
-                element={<LoginPage onLogin={login} onSignup={signup} user={user} />}
+                element={
+                  user ? (
+                    // user が既に存在する場合は安全に / へリダイレクト（React Router 制御）
+                    <Navigate to="/" replace />
+                  ) : (
+                    <LoginPage onLogin={login} onSignup={signup} user={user} />
+                  )
+                }
               />
 
               {/* ホームはログインが必要なら /login にリダイレクト */}

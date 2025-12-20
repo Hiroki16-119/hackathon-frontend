@@ -1,16 +1,18 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import LoginForm from "../components/LoginForm";
 import Logo from "../components/Logo";
 
 export default function LoginPage({ onLogin, onSignup, user }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    if (user) {
+    // 現在が /login のときだけ、user が存在すれば / に遷移する
+    if (user && location.pathname === "/login") {
       navigate("/", { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, location.pathname, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center relative">
