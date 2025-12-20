@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { generateDescription } from "../api/openai";
 import { getAuth } from "firebase/auth";
-import authFetch from "../lib/authFetch";
+// authFetch は現在未使用のため削除
+import CategoryPredictButton from "../components/CategoryPredictButton";
+import PricePredictButton from "../components/PricePredictButton";
+import DescriptionGenerator from "../components/DescriptionGenerator";
+import AllAutoFillButton from "../components/AllAutoFillButton";
 
 export default function Sell({ onProductAdded, user }) {
   const [name, setName] = useState("");
@@ -11,8 +14,8 @@ export default function Sell({ onProductAdded, user }) {
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [userHint, setUserHint] = useState("");
-  const [loadingDesc, setLoadingDesc] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [predictingCategory, setPredictingCategory] = useState(false);
 
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState("");
@@ -20,22 +23,7 @@ export default function Sell({ onProductAdded, user }) {
   const navigate = useNavigate();
   const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 
-  const handleGenerateDescription = async () => {
-    if (!name) {
-      alert("先に商品名を入力してください！");
-      return;
-    }
-    setLoadingDesc(true);
-    try {
-      const desc = await generateDescription(name, userHint);
-      setDescription(desc);
-    } catch (err) {
-      console.error(err);
-      alert("説明生成に失敗しました。");
-    } finally {
-      setLoadingDesc(false);
-    }
-  };
+  // カテゴリー推定は components/CategoryPredictButton.jsx に委譲済みのためローカル関数は不要
 
   const onFileChange = (e) => {
     const f = e.target.files?.[0];
@@ -163,6 +151,18 @@ export default function Sell({ onProductAdded, user }) {
             </div>
           </div>
 
+          {/* まとめて自動生成ボタン（フォーム上部） */}
+          <div className="mb-5">
+            <AllAutoFillButton
+              name={name}
+              userHint={userHint}
+              setPrice={setPrice}
+              setCategory={setCategory}
+              setDescription={setDescription}
+              apiBase={API_BASE_URL}
+            />
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label className="block">
@@ -178,7 +178,10 @@ export default function Sell({ onProductAdded, user }) {
               </label>
 
               <label className="block">
-                <div className="text-sm text-slate-200 mb-2">価格（円）</div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm text-slate-200">価格（円）</div>
+                  <PricePredictButton name={name} setPrice={setPrice} apiBase={API_BASE_URL} />
+                </div>
                 <input
                   type="number"
                   value={price}
@@ -191,7 +194,10 @@ export default function Sell({ onProductAdded, user }) {
             </div>
 
             <label className="block">
-              <div className="text-sm text-slate-200 mb-2">カテゴリー</div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm text-slate-200">カテゴリー</div>
+                <CategoryPredictButton name={name} setCategory={setCategory} apiBase={API_BASE_URL} />
+              </div>
               <input
                 type="text"
                 value={category}
@@ -211,18 +217,7 @@ export default function Sell({ onProductAdded, user }) {
                   className="flex-1 rounded-lg px-4 py-3 bg-white/5 border border-white/6 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400"
                   placeholder="例：新品同様・未使用・限定モデル"
                 />
-                <button
-                  type="button"
-                  onClick={handleGenerateDescription}
-                  disabled={loadingDesc}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                    loadingDesc
-                      ? "bg-gray-500 text-black"
-                      : "bg-gradient-to-r from-cyan-400 to-violet-400 text-black shadow-[0_8px_30px_rgba(99,102,241,0.12)]"
-                  }`}
-                >
-                  {loadingDesc ? "生成中..." : "説明を生成"}
-                </button>
+                <DescriptionGenerator name={name} userHint={userHint} setDescription={setDescription} />
               </div>
             </div>
 

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginForm from "../components/LoginForm";
+import Logo from "../components/Logo";
 
 export default function LoginPage({ onLogin, onSignup, user }) {
   const navigate = useNavigate();
@@ -16,9 +17,7 @@ export default function LoginPage({ onLogin, onSignup, user }) {
       <div className="w-full max-w-2xl mx-auto relative z-20">
         <div className="bg-gradient-to-r from-indigo-900/50 to-violet-900/40 rounded-2xl p-10 backdrop-blur-md border border-white/6 shadow-lg">
           <div className="flex flex-col md:flex-row items-center gap-6 mb-8 justify-center">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-cyan-300 to-violet-400 shadow-neon flex items-center justify-center text-black font-bold text-lg">
-              NG
-            </div>
+            <Logo size={64} className="text-lg" />
             <div className="text-center md:text-left">
               <h1 className="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-pink-300">
                 NextGen Flea

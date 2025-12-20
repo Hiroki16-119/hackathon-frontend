@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import ProductList from "../components/ProductList";
+import React from "react";
+import Logo from "../components/Logo";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -79,7 +81,7 @@ export default function Home({ products: initialProducts, user, fetchProducts })
         <header className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-3">
-              <span className="inline-block w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400 shadow-neon"></span>
+              <Logo size={40} />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-pink-300">NextGen Flea</span>
             </h1>
             <p className="text-sm text-white/85 mt-1">近未来のフリマ — あなたに最適な商品をレコメンド</p>
@@ -93,7 +95,7 @@ export default function Home({ products: initialProducts, user, fetchProducts })
                 className={`px-3 py-1 rounded-md text-sm transition ${
                   !showOnlyUnpurchased
                     ? "bg-gradient-to-r from-cyan-400 to-violet-400 text-black shadow-[0_8px_30px_rgba(99,102,241,0.18)]"
-                    : "bg-white/5 text-slate-200"
+                    : "bg-white/5 text-slate200"
                 }`}
               >
                 すべて
@@ -103,7 +105,7 @@ export default function Home({ products: initialProducts, user, fetchProducts })
                 className={`px-3 py-1 rounded-md text-sm transition ${
                   showOnlyUnpurchased
                     ? "bg-gradient-to-r from-cyan-400 to-violet-400 text-black shadow-[0_8px_30px_rgba(99,102,241,0.18)]"
-                    : "bg-white/5 text-slate-200"
+                    : "bg-white/5 text-slate200"
                 }`}
               >
                 未購入のみ
