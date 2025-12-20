@@ -151,7 +151,7 @@ function ProductCard({
             className="w-full bg-gray-400 text-white py-2 rounded-md cursor-not-allowed"
             disabled
           >
-            購入済み
+            売り切れ
           </button>
         ) : (
           <button

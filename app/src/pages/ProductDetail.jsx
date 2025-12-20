@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import authFetch from "../lib/authFetch"; // 既に作成済みなら使う（無ければ通常 fetch のまま）
+import PriceCheckButton from "../components/PriceCheckButton";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -83,7 +84,12 @@ export default function ProductDetail() {
           }
         }}
       />
-      <div className="mb-2">価格: {product.price}円</div>
+      <div className="mb-2 flex items-center gap-4">
+        <div>価格: {product.price}円</div>
+        <div>
+          <PriceCheckButton name={product.name} price={product.price} apiBase={API_BASE_URL} />
+        </div>
+      </div>
       {/* カテゴリーを表示 */}
       <div className="mb-2">カテゴリー: {product.category || "未設定"}</div>
       <div className="mb-2">説明: {product.description}</div>

@@ -1,13 +1,15 @@
+import React from "react";
 import { Link } from "react-router-dom";
+import Logo from "../components/Logo";
 
-export default function Navbar({ user, onLogout }) {
+export default function Navbar({ user , onLogout }) {
   return (
     <nav className="w-full sticky top-0 z-50">
       <div className="backdrop-blur-md bg-white/5 border-b border-white/6">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
           {/* 左側ロゴ */}
-          <Link to="/" className="flex items-center gap-3 no-underline">
-            <span className="inline-block w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400 shadow-neon" />
+          <Link to="/" className="flex items-center gap-2">
+            <Logo size={32}>NG</Logo>
             <span className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-pink-300">
               NextGen Flea
             </span>
